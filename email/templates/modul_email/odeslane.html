@@ -1,0 +1,6 @@
+{% extends "core/base.html" %}{% block content %}<div class="bm-head"><h3>Odeslané e-maily</h3></div>
+<p class="text-muted">Posledních 200 e-mailů odeslaných z aplikace (modul Odesílání e-mailů).</p>
+<div class="table-responsive"><table class="table table-sm small"><thead><tr><th>Datum</th><th>Zakázka</th><th>Komu</th><th>Předmět</th><th>Přílohy</th><th>Odeslal</th></tr></thead><tbody>
+{% for o in odeslane %}<tr><td class="text-nowrap">{{ o.datum|date:"d.m.Y H:i" }}</td><td>{% if o.zakazka %}<a href="{% url 'plocha' o.zakazka.pk %}">{{ o.zakazka.cislo_zakazky }}</a>{% else %}–{% endif %}</td>
+<td>{{ o.komu }}{% if o.kopie %}<div class="text-muted">kopie: {{ o.kopie }}</div>{% endif %}</td><td>{{ o.predmet }}</td><td class="text-muted">{{ o.prilohy|linebreaksbr }}</td><td>{{ o.odeslal.get_full_name|default:o.odeslal.username|default:"–" }}</td></tr>
+{% empty %}<tr><td colspan="6" class="text-muted">Zatím nebyl odeslán žádný e-mail.</td></tr>{% endfor %}</tbody></table></div>{% endblock %}
