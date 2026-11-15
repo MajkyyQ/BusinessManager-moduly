@@ -1,6 +1,6 @@
 # Modul Odesílání e-mailů
 
-Verze 1.0 · pro BusinessManager od verze se systémem modulů (Nastavení → Moduly)
+Verze 1.1 · pro BusinessManager od verze se systémem modulů (Nastavení → Moduly); oprávnění Odesílání e-mailů vyžaduje BusinessManager s vlastními oprávněními modulů (bezpečnostní audit, listopad 2026)
 
 Dokumenty, fotografie a přílohy zakázky se odešlou e-mailem přímo z aplikace, s podpisem firmy.
 
@@ -27,6 +27,14 @@ Na zakázce (nebo v náhledu zakázkového listu, nabídky či faktury) tlačít
 
 Odeslané e-maily jsou v historii zakázky a v **Nastavení → Moduly → Odeslané e-maily**.
 
+## Kdo smí odesílat
+
+E-mail z firemní schránky odešle jen role s oprávněním **Odesílání e-mailů** (`email.odesilat`). Při instalaci modulu ho dostanou výchozí role **Technik** a **Administrativa** a samozřejmě administrátor. Základní role **Zaměstnanec** ho nemá. Administrátor ho přidá nebo odebere v **Nastavení → Role**. Bez oprávnění se tlačítko Odeslat e-mailem nezobrazí a stránka odesílání se neotevře.
+
+Oprávnění vzniklo po bezpečnostním auditu: dřív mohl každý zaměstnanec poslat z firemní schránky libovolný text na libovolnou adresu s podpisem firmy. Se starší verzí BusinessManager, která vlastní oprávnění modulů nezná, modul funguje dál a odesílat smí každý se základním přístupem.
+
+Heslo ke schránce je v databázi uložené čitelně (aplikace ho potřebuje při každém odeslání), proto je i v zálohách databáze. Zálohy patří na bezpečné místo a pro schránku je vhodné použít heslo aplikace, které jde kdykoli zrušit.
+
 ## Technicky
 
 - Tabulky `modul_email_nastaveniemailu` (jediný záznam, heslo ke schránce) a `modul_email_odeslanyemail`.
@@ -36,7 +44,7 @@ Odeslané e-maily jsou v historii zakázky a v **Nastavení → Moduly → Odesl
 
 ## Automatické testy
 
-Modul je pokryt 14 automatickými testy v souboru `tests.py`. Běží v testovacím prostředí s vymyšlenými daty a žádný skutečný e-mail přitom neodejde (Django zprávy jen zachytí). Ověřují, že kód modulu funguje správně. Že funguje spojení s poštovním serverem konkrétní firmy, ověří po instalaci tlačítko **Uložit a odeslat zkušební e-mail** v nastavení.
+Modul je pokryt 15 automatickými testy v souboru `tests.py`. Běží v testovacím prostředí s vymyšlenými daty a žádný skutečný e-mail přitom neodejde (Django zprávy jen zachytí). Ověřují, že kód modulu funguje správně. Že funguje spojení s poštovním serverem konkrétní firmy, ověří po instalaci tlačítko **Uložit a odeslat zkušební e-mail** v nastavení.
 
 Spuštění ze složky aplikace:
 
@@ -60,3 +68,4 @@ python manage.py test moduly.email
 | `test_modul_v_nastaveni_a_odeslane` | Modul je vidět v Nastavení → Moduly a odeslaný e-mail se objeví v přehledu odeslaných. |
 | `test_odeslane_jen_pro_administratora` | Přehled odeslaných e-mailů vidí jen administrátor. |
 | `test_tlacitko_v_nahledu_dokumentu` | V náhledu dokladu (např. faktury) je tlačítko pro odeslání, které daný doklad rovnou předvybere. |
+| `test_odesilat_smi_jen_role_s_opravnenim` | Bezpečnost: zaměstnanec bez oprávnění Odesílání e-mailů tlačítko nevidí a e-mail neodešle ani přímým požadavkem; po přidání oprávnění roli odeslat může. Technik oprávnění má. |

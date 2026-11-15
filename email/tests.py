@@ -135,3 +135,18 @@ class ModulEmailTest(TestCase):
     def test_tlacitko_v_nahledu_dokumentu(self):
         r = self.client.get(reverse("dokument", args=["faktura", self.f.pk]))
         self.assertContains(r, f"vybrat=dok%3Afaktura%3A{self.f.pk}")
+
+    def test_odesilat_smi_jen_role_s_opravnenim(self):
+        """Bezpečnostní audit: e-mail z firemní schránky pošle jen role s oprávněním „Odesílání e-mailů“ (Technik, Administrativa;
+        ne základní role Zaměstnanec). Administrátor může oprávnění přidat další roli."""
+        from django.core import mail
+        from core.models import Opravneni, Role
+        self.client.force_login(uzivatel("brigadnik", "Zaměstnanec"))
+        self.assertNotContains(self.client.get(reverse("plocha", args=[self.z.pk])), "Odeslat e-mailem")
+        r = self._odeslat(soubor=[])
+        self.assertEqual(r.status_code, 302); self.assertEqual(len(mail.outbox), 0)
+        self.assertIn("Odesílání e-mailů", " ".join(str(m) for m in r.wsgi_request._messages))
+        Role.objects.get(nazev="Zaměstnanec").opravneni.add(Opravneni.objects.get(kod="email.odesilat"))
+        self.assertEqual(self._odeslat(soubor=[]).status_code, 302); self.assertEqual(len(mail.outbox), 1)
+        self.client.force_login(uzivatel("technik", "Technik"))
+        self.assertContains(self.client.get(reverse("plocha", args=[self.z.pk])), "Odeslat e-mailem")
