@@ -31,5 +31,32 @@ Odeslané e-maily jsou v historii zakázky a v **Nastavení → Moduly → Odesl
 
 - Tabulky `modul_email_nastaveniemailu` (jediný záznam, heslo ke schránce) a `modul_email_odeslanyemail`.
 - Odesílání vestavěným `django.core.mail` (SMTP), žádné další knihovny.
-- Testy: `python manage.py test moduly.email`.
+- Testy: `python manage.py test moduly.email` (přehled níže).
 - Odebrání: smazat složku a znovu spustit aplikaci. Tabulky a data v databázi zůstanou.
+
+## Automatické testy
+
+Modul je pokryt 14 automatickými testy v souboru `tests.py`. Běží v testovacím prostředí s vymyšlenými daty a žádný skutečný e-mail přitom neodejde (Django zprávy jen zachytí). Ověřují, že kód modulu funguje správně. Že funguje spojení s poštovním serverem konkrétní firmy, ověří po instalaci tlačítko **Uložit a odeslat zkušební e-mail** v nastavení.
+
+Spuštění ze složky aplikace:
+
+```
+python manage.py test moduly.email
+```
+
+| Test | Co ověřuje |
+|---|---|
+| `test_odeslani_s_prilohami_a_podpisem` | E-mail odejde správnému příjemci, se skrytou kopií odesílateli a odpovědí na pracovníka. Připojí se PDF faktury, fotografie i příloha zakázky, doplní se podpis. Odeslání se uloží do přehledu odeslaných e-mailů a do historie zakázky. |
+| `test_formular_nabidne_soubory_zakazky_a_kontakt` | Formulář nabídne zakázkový list, fakturu (PDF i ISDOC), fotografie a přílohy zakázky, předvyplní adresu zákazníka a předem zaškrtne vybraný doklad. |
+| `test_technik_neposle_fakturu` | Technik nemá oprávnění k fakturám: faktura se mu nenabídne a nejde ji poslat ani podvrženým požadavkem. |
+| `test_cizi_soubor_nejde_pripojit` | K e-mailu nejde připojit soubor, který k zakázce nepatří. |
+| `test_kontrola_adres_a_predmetu` | Neplatná adresa příjemce a chybějící předmět se zachytí před odesláním. |
+| `test_bez_nastaveni_se_neodesila` | Bez vyplněného nastavení je tlačítko Odeslat neaktivní, aplikace to vysvětlí a nic neodejde. |
+| `test_bez_internetu_srozumitelna_chyba` | Bez připojení k internetu aplikace nespadne a ukáže srozumitelnou hlášku. |
+| `test_podpis_vynecha_prazdne_radky` | Řádky podpisu bez vyplněného údaje se vynechají a v textu nezůstanou značky ani prázdné mezery. |
+| `test_nastaveni_jen_pro_administratora_a_heslo_se_neukazuje` | Nastavení modulu otevře jen administrátor, heslo ke schránce se nikde nezobrazí a prázdné pole hesla při uložení ponechá původní heslo. |
+| `test_zkusebni_email` | Tlačítko pro zkušební e-mail pošle zprávu na adresu odesílatele. |
+| `test_tlacitko_na_zakazce` | Na zakázce je tlačítko ✉ Odeslat e-mailem. |
+| `test_modul_v_nastaveni_a_odeslane` | Modul je vidět v Nastavení → Moduly a odeslaný e-mail se objeví v přehledu odeslaných. |
+| `test_odeslane_jen_pro_administratora` | Přehled odeslaných e-mailů vidí jen administrátor. |
+| `test_tlacitko_v_nahledu_dokumentu` | V náhledu dokladu (např. faktury) je tlačítko pro odeslání, které daný doklad rovnou předvybere. |
