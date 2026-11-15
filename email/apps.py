@@ -1,6 +1,9 @@
 from django.apps import AppConfig
 
-VERZE = "1.0"
+VERZE = "1.1"
+ODESILAT = "email.odesilat"
+OPRAVNENI = (ODESILAT, "Odesílání e-mailů", "Odeslání dokumentů, fotografií a příloh zakázky e-mailem z firemní schránky (modul Odesílání e-mailů).")
+VYCHOZI_ROLE = ("Technik", "Administrativa")  # role, které oprávnění dostanou při instalaci modulu (migrace 0002)
 
 
 class EmailConfig(AppConfig):
@@ -23,10 +26,15 @@ class EmailConfig(AppConfig):
             return [dict(text="✉ Odeslat e-mailem", url=reverse("modul_email:odeslat") + "?" + urlencode({"zakazka": z.pk, "vybrat": f"dok:{typ}:{o.pk}"}),
                          title="Odeslat dokument e-mailem")]
 
+        # Odeslat e-mail z firemní schránky smí jen role s oprávněním „Odesílání e-mailů“ (Nastavení → Role).
+        # Starší základní aplikace vlastní oprávnění modulů nezná: tam odesílání zůstane jako dřív (stačí základní přístup).
+        vlastni = "opravneni" in getattr(moduly.Modul, "__dataclass_fields__", {})
+        prava = {"modul_email:nastaveni": {P.NASTAVENI}, "modul_email:odeslane": {P.NASTAVENI}}
+        if vlastni: prava["modul_email:odeslat"] = {ODESILAT}
         moduly.registruj(moduly.Modul(
             kod="email", nazev="Odesílání e-mailů", verze=VERZE,
             popis="Dokumenty, fotografie a přílohy zakázky odeslané e-mailem přímo z aplikace, s podpisem firmy.",
             pozadavky="e-mailovou schránku firmy (vyplní se v Nastavení e-mailu) a připojení k internetu při odesílání",
             nastaveni=[("Nastavení e-mailu", "modul_email:nastaveni"), ("Odeslané e-maily", "modul_email:odeslane")],
             akce_zakazky=akce_zakazky, akce_dokumentu=akce_dokumentu,
-            prava={"modul_email:nastaveni": {P.NASTAVENI}, "modul_email:odeslane": {P.NASTAVENI}}))
+            prava=prava, **({"opravneni": [OPRAVNENI]} if vlastni else {})))
