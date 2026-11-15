@@ -5,6 +5,8 @@ from django.db.models import Q
 
 from core.models import VYCET, Zakazka
 
+from .sifrovani import SifrovaneHeslo, je_zasifrovane
+
 
 def C(n=200, **k): return models.CharField(max_length=n, blank=True, **k)
 
@@ -22,7 +24,8 @@ class NastaveniEmailu(models.Model):
     port = models.PositiveIntegerField(default=587)
     sifrovani = models.CharField("šifrování", max_length=10, default="tls", choices=SIFROVANI)
     uzivatel = C(200, verbose_name="přihlašovací jméno", help_text="Obvykle celá e-mailová adresa schránky.")
-    heslo = C(200, verbose_name="heslo", help_text="U Gmailu a Microsoftu 365 heslo aplikace, ne běžné heslo k účtu.")
+    heslo = SifrovaneHeslo("heslo", max_length=500, blank=True, help_text="U Gmailu a Microsoftu 365 heslo aplikace, ne běžné heslo k účtu. "
+                           "Ukládá se zašifrované.")
     odesilatel_email = models.EmailField("e-mail odesílatele", blank=True, help_text="Adresa, ze které zákazník e-mail dostane.")
     odesilatel_jmeno = C(150, verbose_name="jméno odesílatele", help_text="Např. název firmy. Prázdné = název firmy z Nastavení → Firma.")
     kopie_odesilateli = models.BooleanField("posílat skrytou kopii odesílateli", default=True,
@@ -36,6 +39,7 @@ class NastaveniEmailu(models.Model):
     @classmethod
     def aktualni(cls): return cls.objects.first()
     def je_nastaveno(self): return bool(self.smtp_server and self.odesilatel_email)
+    def heslo_necitelne(self): return je_zasifrovane(self.heslo)  # uložené jiným SECRET_KEY (např. obnova bez původního .env)
     def __str__(self): return self.odesilatel_email or "Nastavení e-mailu"
 
 class OdeslanyEmail(models.Model):

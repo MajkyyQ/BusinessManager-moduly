@@ -1,6 +1,6 @@
 # Modul Odesílání e-mailů
 
-Verze 1.1 · pro BusinessManager od verze se systémem modulů (Nastavení → Moduly); oprávnění Odesílání e-mailů vyžaduje BusinessManager s vlastními oprávněními modulů (bezpečnostní audit, listopad 2026)
+Verze 1.2 · pro BusinessManager od verze se systémem modulů (Nastavení → Moduly); oprávnění Odesílání e-mailů vyžaduje BusinessManager s vlastními oprávněními modulů a šifrované heslo knihovnu `cryptography` z jeho `requirements.txt` (BusinessManager z listopadu 2026 a novější)
 
 Dokumenty, fotografie a přílohy zakázky se odešlou e-mailem přímo z aplikace, s podpisem firmy.
 
@@ -33,18 +33,22 @@ E-mail z firemní schránky odešle jen role s oprávněním **Odesílání e-ma
 
 Oprávnění vzniklo po bezpečnostním auditu: dřív mohl každý zaměstnanec poslat z firemní schránky libovolný text na libovolnou adresu s podpisem firmy. Se starší verzí BusinessManager, která vlastní oprávnění modulů nezná, modul funguje dál a odesílat smí každý se základním přístupem.
 
-Heslo ke schránce je v databázi uložené čitelně (aplikace ho potřebuje při každém odeslání), proto je i v zálohách databáze. Zálohy patří na bezpečné místo a pro schránku je vhodné použít heslo aplikace, které jde kdykoli zrušit.
+## Heslo ke schránce
+
+Heslo se do databáze ukládá **zašifrované** (od verze 1.2). Aplikace ho potřebuje při každém odeslání, proto ho nejde uložit jen jako otisk jako hesla k účtům. Šifruje se klíčem odvozeným ze `SECRET_KEY` v souboru `.env` aplikace (Fernet z knihovny `cryptography`), takže kdo má jen databázi nebo její zálohu, heslo nepřečte. Heslo uložené ve starší verzi se při aktualizaci zašifruje samo.
+
+Když se `SECRET_KEY` změní, například po obnově zálohy na novém PC bez původního `.env`, uložené heslo nejde rozšifrovat. Nastavení e-mailu pak požádá o jeho nové zadání a odeslání do té doby skončí srozumitelnou hláškou. Proto `zaloha.bat` ukládá do zálohy i `.env`. Pro schránku je i tak vhodné použít heslo aplikace, které jde kdykoli zrušit.
 
 ## Technicky
 
-- Tabulky `modul_email_nastaveniemailu` (jediný záznam, heslo ke schránce) a `modul_email_odeslanyemail`.
-- Odesílání vestavěným `django.core.mail` (SMTP), žádné další knihovny.
+- Tabulky `modul_email_nastaveniemailu` (jediný záznam, heslo ke schránce zašifrované, viz `sifrovani.py`) a `modul_email_odeslanyemail`.
+- Odesílání vestavěným `django.core.mail` (SMTP), šifrování hesla knihovnou `cryptography` (je v `requirements.txt` aplikace).
 - Testy: `python manage.py test moduly.email` (přehled níže).
 - Odebrání: smazat složku a znovu spustit aplikaci. Tabulky a data v databázi zůstanou.
 
 ## Automatické testy
 
-Modul je pokryt 15 automatickými testy v souboru `tests.py`. Běží v testovacím prostředí s vymyšlenými daty a žádný skutečný e-mail přitom neodejde (Django zprávy jen zachytí). Ověřují, že kód modulu funguje správně. Že funguje spojení s poštovním serverem konkrétní firmy, ověří po instalaci tlačítko **Uložit a odeslat zkušební e-mail** v nastavení.
+Modul je pokryt 16 automatickými testy v souboru `tests.py`. Běží v testovacím prostředí s vymyšlenými daty a žádný skutečný e-mail přitom neodejde (Django zprávy jen zachytí). Ověřují, že kód modulu funguje správně. Že funguje spojení s poštovním serverem konkrétní firmy, ověří po instalaci tlačítko **Uložit a odeslat zkušební e-mail** v nastavení.
 
 Spuštění ze složky aplikace:
 
@@ -69,3 +73,4 @@ python manage.py test moduly.email
 | `test_odeslane_jen_pro_administratora` | Přehled odeslaných e-mailů vidí jen administrátor. |
 | `test_tlacitko_v_nahledu_dokumentu` | V náhledu dokladu (např. faktury) je tlačítko pro odeslání, které daný doklad rovnou předvybere. |
 | `test_odesilat_smi_jen_role_s_opravnenim` | Bezpečnost: zaměstnanec bez oprávnění Odesílání e-mailů tlačítko nevidí a e-mail neodešle ani přímým požadavkem; po přidání oprávnění roli odeslat může. Technik oprávnění má. |
+| `test_heslo_je_v_databazi_zasifrovane` | Bezpečnost: heslo ke schránce je v databázi zašifrované a aplikace ho přečte. S jiným `SECRET_KEY` (obnova bez původního `.env`) odeslání skončí srozumitelnou hláškou a nastavení požádá o nové heslo; s původním klíčem v `SECRET_KEY_FALLBACKS` se heslo přečte. |

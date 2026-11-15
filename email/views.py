@@ -134,6 +134,9 @@ def nacti(klic, z, user):
 
 # ======================================================== Odeslání
 def pripojeni(n):
+    if n.heslo_necitelne():
+        raise ChybaOdeslani("Uložené heslo ke schránce nejde přečíst (aplikace má jiný SECRET_KEY, např. po obnově na novém PC). "
+                            "Zadejte heslo znovu v Nastavení → Moduly → Nastavení e-mailu.")
     return get_connection(host=n.smtp_server, port=n.port, username=n.uzivatel or None, password=n.heslo or None,
                           use_tls=n.sifrovani == "tls", use_ssl=n.sifrovani == "ssl", timeout=TIMEOUT)
 
@@ -202,8 +205,10 @@ class NastaveniEmailuForm(forms.ModelForm):
         super().__init__(*a, **k)
         for f in self.fields.values():
             f.widget.attrs.setdefault("class", "form-check-input" if isinstance(f.widget, forms.CheckboxInput) else "form-select" if isinstance(f.widget, forms.Select) else "form-control")
-        if self.instance.pk and self.instance.heslo:
-            self.fields["heslo"].help_text = "Heslo je uložené. Nové napište jen tehdy, když ho chcete změnit."
+        if self.instance.pk and self.instance.heslo_necitelne():
+            self.fields["heslo"].help_text = "Uložené heslo nejde přečíst (aplikace má jiný SECRET_KEY, např. po obnově na novém PC). Zadejte ho znovu."
+        elif self.instance.pk and self.instance.heslo:
+            self.fields["heslo"].help_text = "Heslo je uložené zašifrované. Nové napište jen tehdy, když ho chcete změnit."
 
     def clean_heslo(self):  # prázdné políčko = ponechat uložené heslo
         return self.cleaned_data.get("heslo") or (self.instance.heslo if self.instance.pk else "")

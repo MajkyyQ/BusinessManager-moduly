@@ -1,6 +1,6 @@
 from django.apps import AppConfig
 
-VERZE = "1.1"
+VERZE = "1.2"
 ODESILAT = "email.odesilat"
 OPRAVNENI = (ODESILAT, "Odesílání e-mailů", "Odeslání dokumentů, fotografií a příloh zakázky e-mailem z firemní schránky (modul Odesílání e-mailů).")
 VYCHOZI_ROLE = ("Technik", "Administrativa")  # role, které oprávnění dostanou při instalaci modulu (migrace 0002)
