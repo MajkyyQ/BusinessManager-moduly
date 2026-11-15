@@ -150,3 +150,21 @@ class ModulEmailTest(TestCase):
         self.assertEqual(self._odeslat(soubor=[]).status_code, 302); self.assertEqual(len(mail.outbox), 1)
         self.client.force_login(uzivatel("technik", "Technik"))
         self.assertContains(self.client.get(reverse("plocha", args=[self.z.pk])), "Odeslat e-mailem")
+
+    def test_heslo_je_v_databazi_zasifrovane(self):
+        from django.db import connection
+        from django.test import override_settings
+        from moduly.email.models import NastaveniEmailu
+        from moduly.email.views import ChybaOdeslani, odeslat
+        with connection.cursor() as c:
+            c.execute(f"SELECT heslo FROM {NastaveniEmailu._meta.db_table} WHERE id = %s", [self.n.pk]); ulozene = c.fetchone()[0]
+        self.assertTrue(ulozene.startswith("sifr1:")); self.assertNotIn("tajne", ulozene)  # v databázi (i v záloze) není čitelné
+        self.n.refresh_from_db(); self.assertEqual(self.n.heslo, "tajne"); self.assertFalse(self.n.heslo_necitelne())
+        puvodni = __import__("django.conf").conf.settings.SECRET_KEY
+        with override_settings(SECRET_KEY="jiny-klic-po-obnove-na-novem-pc"):  # obnova bez původního .env
+            n = NastaveniEmailu.objects.get(pk=self.n.pk); self.assertTrue(n.heslo_necitelne())
+            with self.assertRaisesMessage(ChybaOdeslani, "nejde přečíst"): odeslat(n, self.u, ["a@b.cz"], [], "X", "Y", [])
+            self.client.force_login(uzivatel("admin", "Administrátor"))
+            self.assertContains(self.client.get(reverse("modul_email:nastaveni")), "Zadejte ho znovu")
+            with override_settings(SECRET_KEY_FALLBACKS=[puvodni]):  # plánovaná změna klíče: původní klíč jako záložní
+                self.assertEqual(NastaveniEmailu.objects.get(pk=self.n.pk).heslo, "tajne")

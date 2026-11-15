@@ -25,6 +25,7 @@ email/
   __init__.py
   apps.py          registrace modulu v aplikaci (core.moduly.registruj)
   models.py        tabulky modulu
+  sifrovani.py     šifrované uložení hesla ke schránce
   migrations/      migrace tabulek
   urls.py          stránky na /moduly/email/...
   views.py
