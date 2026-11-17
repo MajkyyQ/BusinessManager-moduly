@@ -92,6 +92,27 @@ class ModulEmailTest(TestCase):
             r = self._odeslat()
         self.assertContains(r, "připojený k internetu")
 
+    def test_odmitnute_prihlaseni_neskryje_zavrene_spojeni(self):
+        import smtplib
+        from unittest import mock
+        from moduly.email import views as email_modul
+        s = email_modul._SMTP(); s.ehlo_resp = b"ok"; s.esmtp_features = {"auth": "PLAIN LOGIN"}
+        odmitnuti = smtplib.SMTPAuthenticationError(535, b"5.7.8 Username and Password not accepted")
+        with mock.patch("smtplib.SMTP.auth", side_effect=[odmitnuti, smtplib.SMTPServerDisconnected("Connection unexpectedly closed")]) as auth:
+            with self.assertRaises(smtplib.SMTPAuthenticationError): s.login("info@servis.cz", "spatne")
+        self.assertEqual(auth.call_count, 1)  # Gmail po odmítnutí spojení zavře, druhý způsob přihlášení se nezkouší
+        self.assertIn("odmítl přihlášení", email_modul.srozumitelna_chyba(odmitnuti))
+        self.assertIn("heslo aplikace", email_modul.srozumitelna_chyba(smtplib.SMTPServerDisconnected("Connection unexpectedly closed")))
+        self.assertIs(email_modul.SmtpPripojeni(use_ssl=True).connection_class, email_modul._SMTP_SSL)
+
+    def test_port_a_sifrovani_musi_sedet(self):
+        self.client.force_login(uzivatel("admin", "Administrátor"))
+        for port, sifrovani in ((465, "tls"), (587, "ssl")):
+            r = self.client.post(reverse("modul_email:nastaveni"), {"odesilatel_email": "info@servis.cz", "smtp_server": "smtp.gmail.com", "port": port,
+                                                                  "sifrovani": sifrovani, "podpis": ""})
+            self.assertContains(r, f"Port {port} používá šifrování")
+        self.n.refresh_from_db(); self.assertEqual(self.n.smtp_server, "smtp.servis.cz")
+
     def test_podpis_vynecha_prazdne_radky(self):
         from moduly.email import views as email_modul
         NastaveniFirmy.objects.update(web="")

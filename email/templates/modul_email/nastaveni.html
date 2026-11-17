@@ -12,7 +12,7 @@ Modul není součástí základní aplikace, byl do ní přidán zvlášť. Pot�
 <button type="button" class="btn btn-link btn-sm p-0 align-baseline" data-smtp="smtp.office365.com,587,tls">Microsoft 365 / Outlook</button>.</p>
 <div class="row g-2 mb-3"><div class="col-md-6"><label class="form-label mb-0 fw-bold" for="id_smtp_server">{{ form.smtp_server.label|capfirst }}</label>{{ form.smtp_server }}<div class="form-text mt-0">{{ form.smtp_server.help_text }}</div><div class="text-danger small">{{ form.smtp_server.errors }}</div></div>
 <div class="col-md-2"><label class="form-label mb-0" for="id_port">{{ form.port.label|capfirst }}</label>{{ form.port }}<div class="text-danger small">{{ form.port.errors }}</div></div>
-<div class="col-md-4"><label class="form-label mb-0" for="id_sifrovani">{{ form.sifrovani.label|capfirst }}</label>{{ form.sifrovani }}</div></div>
+<div class="col-md-4"><label class="form-label mb-0" for="id_sifrovani">{{ form.sifrovani.label|capfirst }}</label>{{ form.sifrovani }}<div class="text-danger small">{{ form.sifrovani.errors }}</div></div></div>
 <div class="row g-2 mb-3"><div class="col-md-6"><label class="form-label mb-0" for="id_uzivatel">{{ form.uzivatel.label|capfirst }}</label>{{ form.uzivatel }}<div class="form-text mt-0">{{ form.uzivatel.help_text }}</div></div>
 <div class="col-md-6"><label class="form-label mb-0" for="id_heslo">{{ form.heslo.label|capfirst }}</label>{{ form.heslo }}<div class="form-text mt-0">{{ form.heslo.help_text }}</div></div></div>
 <div class="form-check mb-3">{{ form.kopie_odesilateli }}<label class="form-check-label" for="id_kopie_odesilateli">{{ form.kopie_odesilateli.label|capfirst }}</label><div class="form-text mt-0">{{ form.kopie_odesilateli.help_text }}</div></div>
