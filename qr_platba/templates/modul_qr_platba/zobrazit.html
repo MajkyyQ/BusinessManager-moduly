@@ -1,0 +1,17 @@
+{% extends "core/base.html" %}{% block content %}<div class="bm-head"><h3>QR platba – zakázka {{ z.cislo_zakazky }}</h3></div>
+<div class="row g-4 align-items-start">
+<div class="col-lg-6 text-center"><div id="bm-qr" class="d-inline-block p-3 bg-white border rounded" style="width:min(100%,70vh)">
+{% if d %}<img src="{{ obrazek_url }}" alt="QR platba na {{ d.castka|floatformat:'2' }} {{ d.mena }}" style="width:100%;display:block">
+<div class="fw-bold text-dark mt-1">QR Platba</div><div class="fs-3 fw-bold text-dark">{{ d.castka|floatformat:"2g" }} {{ d.mena }}</div>
+{% else %}<div class="text-danger p-4">{{ chyba }}</div>{% endif %}</div>
+{% if d %}<div class="mt-2"><button type="button" class="btn btn-sm btn-outline-secondary" onclick="const e=document.getElementById('bm-qr');document.fullscreenElement?document.exitFullscreen():e.requestFullscreen&&e.requestFullscreen()">⛶ Celá obrazovka</button></div>{% endif %}</div>
+<div class="col-lg-6">
+{% if d %}<table class="table table-sm"><tr><th>Příjemce</th><td>{{ d.prijemce|default:"–" }}</td></tr>
+<tr><th>Účet</th><td>{{ ucet }}{% if ucet|upper != d.iban %}<br><small class="text-muted">IBAN {{ iban }}</small>{% endif %}</td></tr>
+<tr><th>Částka</th><td>{{ d.castka|floatformat:"2g" }} {{ d.mena }}</td></tr><tr><th>Variabilní symbol</th><td>{{ d.vs }}</td></tr><tr><th>Zpráva pro příjemce</th><td>{{ d.zprava }}</td></tr></table>
+<p class="small text-muted">Zákazník QR kód naskenuje v aplikaci své banky, zkontroluje vyplněný příkaz a odešle platbu.
+Potom zapište platbu na zakázce: <b>Vydat zákazníkovi</b> (nebo <b>Zapsat platbu na místě</b>) se způsobem <b>QR kód</b>.</p>
+{% elif chyba %}<div class="alert alert-warning">{{ chyba }} Číslo účtu se vyplňuje v <a href="{% url 'nastaveni_firma' %}">Nastavení → Firma</a>.</div>{% endif %}
+<form method="get" class="d-flex flex-wrap gap-2 align-items-end mb-3"><div><label class="form-label small mb-0" for="qr-castka">Částka</label>
+<input class="form-control" id="qr-castka" name="castka" inputmode="decimal" value="{{ castka_pole }}" style="max-width:10rem"></div><button class="btn btn-outline-primary">Změnit částku</button></form>
+<a class="btn btn-outline-secondary" href="{% url 'plocha' z.pk %}">← Zpět na zakázku</a></div></div>{% endblock %}
