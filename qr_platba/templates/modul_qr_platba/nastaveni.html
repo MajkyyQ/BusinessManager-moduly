@@ -1,0 +1,12 @@
+{% extends "core/base.html" %}{% block content %}<div class="bm-head"><h3>QR platba</h3></div>
+<div class="alert alert-info col-lg-9"><b>Modul QR platba.</b> Když zákazník platí při vyzvednutí QR kódem, aplikace mu ukáže QR kód přímo na obrazovce:
+v okně <i>Vydat zákazníkovi</i> po výběru způsobu platby <b>QR kód</b> a na zakázce tlačítkem <i>▦ QR platba</i> (velký kód pro zákazníka).
+Kód odpovídá českému standardu QR Platba, takže ho přečte aplikace kterékoli české banky. Účet je číslo účtu firmy, částka podle zakázky
+a variabilní symbol z čísla zakázky. Modul nepotřebuje internet ani žádné další nastavení.</div>
+<div class="col-lg-9"><table class="table table-sm"><tr><th style="width:12rem">Číslo účtu firmy</th><td>{{ f.cislo_uctu|default:"nevyplněno" }}</td></tr>
+<tr><th>IBAN pro QR platbu</th><td>{% if iban %}{{ iban }}{% else %}<span class="text-danger">{{ chyba }}</span>{% endif %}</td></tr>
+<tr><th>Měna</th><td>{{ f.mena|default:"CZK" }}</td></tr></table>
+<a class="btn btn-sm btn-outline-primary" href="{% url 'nastaveni_firma' %}">Upravit číslo účtu v Nastavení → Firma</a>
+{% if ukazka_svg %}<h6 class="text-muted mt-4">Zkouška: QR platba na 100 {{ f.mena|default:"CZK" }}</h6>
+<p class="small text-muted">Naskenujte ho v bankovní aplikaci a zkontrolujte, že se vyplní správný účet. Platbu neodesílejte.</p>
+<div class="bg-white border rounded p-2" style="width:220px">{{ ukazka_svg|safe }}</div>{% endif %}</div>{% endblock %}

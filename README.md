@@ -5,6 +5,7 @@ Rozšíření pro aplikaci [BusinessManager](https://github.com/MajkyyQ/Business
 | Modul | Složka | Co dělá | Potřebuje |
 |:--|:--|:--|:--|
 | Odesílání e-mailů | [`email`](email/README.md) | dokumenty, fotky a přílohy zakázky e-mailem s podpisem firmy | schránku firmy (SMTP), internet při odesílání |
+| QR platba | [`qr_platba`](qr_platba/README.md) | QR kód pro zaplacení zakázky z bankovní aplikace přímo na obrazovce (okno Vydat zákazníkovi a velká stránka pro zákazníka) | číslo účtu firmy, internet ne |
 
 ## Jak přidat modul do aplikace
 
@@ -31,6 +32,14 @@ email/
   views.py
   templates/modul_email/
   tests.py         python manage.py test moduly.email
+  README.md
+
+qr_platba/         bez vlastních tabulek
+  apps.py          QR kód v okně platby na místě (platba_na_miste), tlačítko na zakázce, odkaz v Nastavení
+  spayd.py         QR Platba (SPAYD) a převod čísla účtu na IBAN
+  urls.py, views.py, templates/modul_qr_platba/
+  requirements.txt knihovna segno (QR kód jako SVG)
+  tests.py         python manage.py test moduly.qr_platba
   README.md
 ```
 
