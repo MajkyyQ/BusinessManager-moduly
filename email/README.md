@@ -1,6 +1,6 @@
 # Modul Odesílání e-mailů
 
-Verze 1.2 · pro BusinessManager od verze se systémem modulů (Nastavení → Moduly); oprávnění Odesílání e-mailů vyžaduje BusinessManager s vlastními oprávněními modulů a šifrované heslo knihovnu `cryptography` z jeho `requirements.txt` (BusinessManager z listopadu 2026 a novější)
+Verze 1.3 · pro BusinessManager od verze se systémem modulů (Nastavení → Moduly); oprávnění Odesílání e-mailů vyžaduje BusinessManager s vlastními oprávněními modulů a šifrované heslo knihovnu `cryptography` z jeho `requirements.txt` (BusinessManager z listopadu 2026 a novější)
 
 Dokumenty, fotografie a přílohy zakázky se odešlou e-mailem přímo z aplikace, s podpisem firmy.
 
@@ -48,7 +48,7 @@ Když se `SECRET_KEY` změní, například po obnově zálohy na novém PC bez p
 
 ## Automatické testy
 
-Modul je pokryt 16 automatickými testy v souboru `tests.py`. Běží v testovacím prostředí s vymyšlenými daty a žádný skutečný e-mail přitom neodejde (Django zprávy jen zachytí). Ověřují, že kód modulu funguje správně. Že funguje spojení s poštovním serverem konkrétní firmy, ověří po instalaci tlačítko **Uložit a odeslat zkušební e-mail** v nastavení.
+Modul je pokryt 18 automatickými testy v souboru `tests.py`. Běží v testovacím prostředí s vymyšlenými daty a žádný skutečný e-mail přitom neodejde (Django zprávy jen zachytí). Ověřují, že kód modulu funguje správně. Že funguje spojení s poštovním serverem konkrétní firmy, ověří po instalaci tlačítko **Uložit a odeslat zkušební e-mail** v nastavení.
 
 Spuštění ze složky aplikace:
 
@@ -65,6 +65,8 @@ python manage.py test moduly.email
 | `test_kontrola_adres_a_predmetu` | Neplatná adresa příjemce a chybějící předmět se zachytí před odesláním. |
 | `test_bez_nastaveni_se_neodesila` | Bez vyplněného nastavení je tlačítko Odeslat neaktivní, aplikace to vysvětlí a nic neodejde. |
 | `test_bez_internetu_srozumitelna_chyba` | Bez připojení k internetu aplikace nespadne a ukáže srozumitelnou hlášku. |
+| `test_odmitnute_prihlaseni_neskryje_zavrene_spojeni` | Když server odmítne jméno nebo heslo a hned zavře spojení (tak to dělá Gmail), uživatel uvidí „Server odmítl přihlášení“, ne nic neříkající „Connection unexpectedly closed“. |
+| `test_port_a_sifrovani_musi_sedet` | Nastavení nejde uložit s portem 465 a STARTTLS ani s portem 587 a SSL/TLS, protože takové spojení server hned ukončí. |
 | `test_podpis_vynecha_prazdne_radky` | Řádky podpisu bez vyplněného údaje se vynechají a v textu nezůstanou značky ani prázdné mezery. |
 | `test_nastaveni_jen_pro_administratora_a_heslo_se_neukazuje` | Nastavení modulu otevře jen administrátor, heslo ke schránce se nikde nezobrazí a prázdné pole hesla při uložení ponechá původní heslo. |
 | `test_zkusebni_email` | Tlačítko pro zkušební e-mail pošle zprávu na adresu odesílatele. |

@@ -16,7 +16,9 @@ from pathlib import Path
 from django import forms
 from django.contrib import messages
 from django.core.exceptions import ValidationError
+from django.conf import settings
 from django.core.mail import EmailMessage, get_connection
+from django.core.mail.backends.smtp import EmailBackend
 from django.core.validators import validate_email
 from django.shortcuts import redirect
 from django.urls import reverse
@@ -133,11 +135,39 @@ def nacti(klic, z, user):
 
 
 # ======================================================== Odeslání
+class _JednoPrihlaseni:
+    """smtplib.login zkouší po odmítnutém přihlášení další způsob (PLAIN, pak LOGIN). Gmail ale po prvním odmítnutí
+    spojení zavře, takže uživatel místo „špatné jméno nebo heslo“ (535) uvidí jen „Connection unexpectedly closed“.
+    Po prvním odmítnutí se proto další způsoby nezkouší a nahoru dojde původní chyba přihlášení."""
+    def login(self, *a, **k):
+        self._odmitnuto = None
+        return super().login(*a, **k)
+
+    def auth(self, *a, **k):
+        if getattr(self, "_odmitnuto", None): raise self._odmitnuto
+        try: return super().auth(*a, **k)
+        except smtplib.SMTPAuthenticationError as e:
+            self._odmitnuto = e; raise
+
+
+class _SMTP(_JednoPrihlaseni, smtplib.SMTP): pass
+class _SMTP_SSL(_JednoPrihlaseni, smtplib.SMTP_SSL): pass
+
+
+class SmtpPripojeni(EmailBackend):
+    @property
+    def connection_class(self): return _SMTP_SSL if self.use_ssl else _SMTP
+
+
+SMTP_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+
+
 def pripojeni(n):
     if n.heslo_necitelne():
         raise ChybaOdeslani("Uložené heslo ke schránce nejde přečíst (aplikace má jiný SECRET_KEY, např. po obnově na novém PC). "
                             "Zadejte heslo znovu v Nastavení → Moduly → Nastavení e-mailu.")
-    return get_connection(host=n.smtp_server, port=n.port, username=n.uzivatel or None, password=n.heslo or None,
+    backend = "moduly.email.views.SmtpPripojeni" if settings.EMAIL_BACKEND == SMTP_BACKEND else None  # testy: locmem beze změny
+    return get_connection(backend, host=n.smtp_server.strip(), port=n.port, username=n.uzivatel or None, password=n.heslo or None,
                           use_tls=n.sifrovani == "tls", use_ssl=n.sifrovani == "ssl", timeout=TIMEOUT)
 
 
@@ -151,6 +181,10 @@ def srozumitelna_chyba(e):
     """Technická chyba SMTP jako věta pro uživatele: co se stalo a co s tím."""
     if isinstance(e, smtplib.SMTPAuthenticationError):
         return "Server odmítl přihlášení. Zkontrolujte jméno a heslo v Nastavení → Moduly → Nastavení e-mailu (u Gmailu a Microsoftu 365 je potřeba heslo aplikace)."
+    if isinstance(e, smtplib.SMTPServerDisconnected):
+        return ("Poštovní server nečekaně ukončil spojení. Nejčastěji tak reaguje na špatné přihlašovací jméno nebo heslo "
+                "(u Gmailu a Microsoftu 365 je potřeba heslo aplikace) nebo na nesoulad portu a šifrování "
+                "(587 = STARTTLS, 465 = SSL/TLS). Zkontrolujte Nastavení → Moduly → Nastavení e-mailu.")
     if isinstance(e, smtplib.SMTPRecipientsRefused):
         return "Server odmítl adresu příjemce. Zkontrolujte, že je e-mail příjemce napsaný správně."
     if isinstance(e, smtplib.SMTPSenderRefused):
@@ -217,6 +251,10 @@ class NastaveniEmailuForm(forms.ModelForm):
         c = super().clean()
         if c.get("smtp_server") and not c.get("odesilatel_email"): self.add_error("odesilatel_email", "Vyplňte e-mail odesílatele.")
         if c.get("odesilatel_email") and not c.get("smtp_server"): self.add_error("smtp_server", "Vyplňte server odchozí pošty.")
+        if (c.get("port"), c.get("sifrovani")) == (465, "tls"):
+            self.add_error("sifrovani", "Port 465 používá šifrování SSL/TLS. Zvolte SSL/TLS, nebo port 587 se STARTTLS.")
+        if (c.get("port"), c.get("sifrovani")) == (587, "ssl"):
+            self.add_error("sifrovani", "Port 587 používá šifrování STARTTLS. Zvolte STARTTLS, nebo port 465 se SSL/TLS.")
         return c
 
 
